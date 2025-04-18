@@ -43,12 +43,18 @@ jobs:
           spec: ${{ matrix.spec }}
           browser: electron
           headed: false
+      - name: Verificar arquivos de relatório
+        if: always()
+        run: |
+          find cypress -type f -name "*.json" | sort
       - name: Upload JSON para unificação
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: mochawesome-json
-          path: cypress/reports/html/.jsons/*.json
+          path: |
+            cypress/reports/**/*.json
+            mochawesome-report/**/*.json
           retention-days: 1
   publish-report:
     needs: test
@@ -62,15 +68,27 @@ jobs:
           node-version: 18
       - name: Instalar dependências
         run: npm ci
+      - name: Criar diretórios para relatórios
+        run: |
+          mkdir -p cypress/reports/html/.jsons
+          mkdir -p cypress/reports/final
       - name: Baixar todos os relatórios JSON
         uses: actions/download-artifact@v4
         with:
           name: mochawesome-json
           path: cypress/reports/html/.jsons
+      - name: Verificar arquivos baixados
+        run: |
+          find cypress -type f -name "*.json" | sort
       - name: Gerar relatório unificado HTML
         run: |
-          npm run merge-reports
-          npm run generate-html-report
+          if [ -d "cypress/reports/html/.jsons" ] && [ "$(ls -A cypress/reports/html/.jsons)" ]; then
+            npm run merge-reports
+            npm run generate-html-report
+          else
+            echo "Nenhum arquivo JSON encontrado para gerar relatório"
+            exit 1
+          fi
       - name: Publicar no GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
