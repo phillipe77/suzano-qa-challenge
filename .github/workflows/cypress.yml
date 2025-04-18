@@ -8,7 +8,52 @@ on:
 
 jobs:
   test:
-    # Mantém os testes como estão...
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        containers: [1, 2, 3, 4, 5]
+        include:
+          - containers: 1
+            spec: cypress/e2e/api/products/get.spec.js
+          - containers: 2
+            spec: cypress/e2e/api/products/post.spec.js
+          - containers: 3
+            spec: cypress/e2e/api/products/update.spec.js
+          - containers: 4
+            spec: cypress/e2e/api/products/delete.spec.js
+          - containers: 5
+            spec: cypress/e2e/api/products/negative.spec.js
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      
+      - name: Instalar dependências
+        run: npm ci
+      
+      - name: Executar testes do Cypress
+        run: npx cypress run --spec ${{ matrix.spec }} --reporter cypress-mochawesome-reporter
+      
+      - name: Verificar arquivos gerados
+        if: always()
+        run: |
+          echo "Arquivos em cypress/reports:"
+          find cypress/reports -type f | sort || echo "Diretório não encontrado"
+      
+      - name: Salvar relatórios como artefatos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-results-${{ matrix.containers }}
+          path: |
+            cypress/reports/**/*
+          retention-days: 5
+          if-no-files-found: warn
 
   publish-to-pages:
     needs: test
@@ -22,7 +67,6 @@ jobs:
         with:
           path: relatorios-baixados
       
-      # Adiciona debugging para verificar a estrutura real dos arquivos baixados
       - name: Verificar estrutura dos artefatos
         run: |
           echo "Estrutura completa dos artefatos:"
@@ -33,9 +77,6 @@ jobs:
           # Criar estrutura de diretórios para o site
           mkdir -p site
           
-          # Verificar e copiar os arquivos HTML encontrados
-          find relatorios-baixados -name "index.html" -exec cp -v {} site/ \;
-          
           # Criar página índice principal
           cat > site/index.html <<EOL
           <!DOCTYPE html>
@@ -43,7 +84,7 @@ jobs:
           <head>
               <meta charset="UTF-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Relatórios de Testes API - Suzano</title>
+              <title>Relatórios de Testes API - Suzano QA Challenge</title>
               <style>
                   body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; color: #333; }
                   h1 { color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; }
@@ -97,18 +138,25 @@ jobs:
           for i in {1..5}; do
             mkdir -p site/relatorio-$i
             
-            # Copiar conteúdos para diretório específico (usando find para localizar os arquivos)
-            find relatorios-baixados/cypress-results-$i -type f -exec cp -v {} site/relatorio-$i/ \; || echo "Nenhum arquivo encontrado para relatório $i"
+            # Copiar todo o conteúdo do relatório para o diretório respectivo
+            cp -R relatorios-baixados/cypress-results-$i/cypress/reports/html/* site/relatorio-$i/ 2>/dev/null || echo "Não encontrado em reports/html"
             
-            # Se encontrou um relatório HTML neste diretório, copie-o como index.html
-            find relatorios-baixados/cypress-results-$i -name "*.html" -exec cp -v {} site/relatorio-$i/index.html \; || echo "Nenhum HTML encontrado para relatório $i"
+            # Tentar outros caminhos possíveis
+            cp -R relatorios-baixados/cypress-results-$i/cypress/reports/* site/relatorio-$i/ 2>/dev/null || echo "Não encontrado em reports"
+            
+            # Procurar recursivamente por arquivos HTML e copiá-los
+            find relatorios-baixados/cypress-results-$i -name "*.html" -exec cp {} site/relatorio-$i/ \; 2>/dev/null || echo "Nenhum HTML encontrado"
+            
+            # Se o index.html não existir, criar um arquivo padrão
+            if [ ! -f site/relatorio-$i/index.html ]; then
+              echo "<html><body><h1>Relatório $i</h1><p>Nenhum relatório HTML foi encontrado para este teste.</p></body></html>" > site/relatorio-$i/index.html
+            fi
           done
           
           # Verificar estrutura final
           echo "Estrutura final do site:"
           find site -type f | sort
       
-      # Publicar no GitHub Pages
       - name: Deploy no GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
