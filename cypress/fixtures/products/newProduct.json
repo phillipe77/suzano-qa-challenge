@@ -1,0 +1,7 @@
+{
+    "title": "Produto de Teste",
+    "price": 99.99,
+    "description": "Este é um produto criado para testes automatizados de API",
+    "category": "electronics",
+    "image": "https://fakestoreapi.com/img/test-product.jpg"
+}
