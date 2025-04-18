@@ -26,10 +26,10 @@ jobs:
             spec: cypress/e2e/api/products/negative.spec.js
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: 18
 
@@ -50,7 +50,7 @@ jobs:
 
       - name: Salvar relatórios como artefatos
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: cypress-results-${{ matrix.containers }}
           path: |
@@ -65,10 +65,10 @@ jobs:
     if: always()
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: 18
 
@@ -76,7 +76,7 @@ jobs:
         run: npm ci
 
       - name: Baixar todos os relatórios
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v4
         with:
           path: cypress-results
 
@@ -92,7 +92,7 @@ jobs:
           marge cypress/reports/merged-report.json -f index -o cypress/reports/final
 
       - name: Publicar relatório final
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: final-report
           path: cypress/reports/final
