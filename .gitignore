@@ -1,0 +1,20 @@
+# Dependências
+node_modules/
+
+# Arquivos gerados
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/
+
+# Relatórios (opcional - você pode querer manter estes arquivos)
+# cypress/reports/
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos de ambiente
+.env
+.env.local
+
+node_modules/
