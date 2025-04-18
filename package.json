@@ -1,0 +1,31 @@
+{
+  "name": "suzano-qa-challenge",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "cypress run",
+    "test:parallel": "cypress run --parallel",
+    "test:api": "cypress run --spec cypress/e2e/api/**/*.spec.js",
+    "test:api:parallel": "cypress run --parallel --spec cypress/e2e/api/**/*.spec.js",
+    "test:products": "cypress run --spec cypress/e2e/api/products/**/*.spec.js",
+    "test:get": "cypress run --spec cypress/e2e/api/products/get.spec.js",
+    "test:post": "cypress run --spec cypress/e2e/api/products/post.spec.js",
+    "test:update": "cypress run --spec cypress/e2e/api/products/update.spec.js",
+    "test:delete": "cypress run --spec cypress/e2e/api/products/delete.spec.js",
+    "test:negative": "cypress run --spec cypress/e2e/api/products/negative.spec.js",
+    "test:open": "cypress open",
+    "report": "npx cypress run --reporter mochawesome",
+    "test:local:parallel": "cypress-parallel -s test:api -t 5 -d cypress/e2e/api/products/"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "cypress": "^14.3.1",
+    "cypress-mochawesome-reporter": "^3.8.2",
+    "cypress-parallel": "^0.15.0"
+  }
+}
