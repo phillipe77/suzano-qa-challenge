@@ -1,6 +1,19 @@
 const { defineConfig } = require("cypress");
 
 module.exports = defineConfig({
+  reporter: 'cypress-mochawesome-reporter',
+  reporterOptions: {
+    reportDir: 'cypress/reports/html',
+    reportPageTitle: 'API Automation Report',
+    embeddedScreenshots: true,
+    inlineAssets: true,
+    charts: true,
+    saveAllAttempts: false,
+    html: false,
+    json: true,
+    jsonFolder: '.jsons'
+  },
+
   e2e: {
     baseUrl: 'https://fakestoreapi.com',
     specPattern: 'cypress/e2e/**/*.spec.js',
@@ -14,16 +27,6 @@ module.exports = defineConfig({
     retries: {
       runMode: 1,
       openMode: 0,
-    },
-
-    reporter: 'cypress-mochawesome-reporter',
-    reporterOptions: {
-      reportDir: 'cypress/reports/html',
-      reportPageTitle: 'API Automation Report',
-      embeddedScreenshots: true,
-      inlineAssets: true,
-      charts: true,
-      saveAllAttempts: false
     },
   },
 
