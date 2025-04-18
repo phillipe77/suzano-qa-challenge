@@ -14,7 +14,6 @@ jobs:
     strategy:
       fail-fast: false  # Continua executando outros jobs mesmo se um falhar
       matrix:
-        # Divide os testes em categorias para execução paralela
         containers: [1, 2, 3, 4, 5]
         include:
           - containers: 1
@@ -49,7 +48,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4 # ← Aqui está a correção
         with:
           name: cypress-results-${{ matrix.containers }}
           path: |
