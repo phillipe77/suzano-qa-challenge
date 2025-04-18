@@ -1,5 +1,5 @@
 name: suzano-cypress-tests-API
-# Executa os testes do Cypress em paralelo e gera um relatório consolidado
+# Executa os testes do Cypress em paralelo e publica os relatórios individuais
 on:
   push:
     branches: [main]
@@ -36,63 +36,8 @@ jobs:
       - name: Instalar dependências
         run: npm ci
       
-      - name: Forçar a geração de JSON
-        run: |
-          # Modificar a configuração para garantir que os relatórios JSON sejam gerados
-          sed -i 's/"html": true/"html": true, "json": true/g' cypress.config.js
-          mkdir -p cypress/reports/html/.jsons
-      
       - name: Executar testes do Cypress
         run: npx cypress run --spec ${{ matrix.spec }} --reporter cypress-mochawesome-reporter
-      
-      - name: Criar JSON manualmente se necessário
-        if: always()
-        run: |
-          if [ ! -d "cypress/reports/html/.jsons" ] || [ -z "$(ls -A cypress/reports/html/.jsons)" ]; then
-            mkdir -p cypress/reports/html/.jsons
-            echo '{
-              "stats": {
-                "suites": 1,
-                "tests": 1,
-                "passes": 1,
-                "pending": 0,
-                "failures": 0,
-                "start": "2023-06-20T00:00:00.000Z",
-                "end": "2023-06-20T00:00:01.000Z",
-                "duration": 1000
-              },
-              "results": [
-                {
-                  "title": "",
-                  "suites": [
-                    {
-                      "title": "Testes de ${{ matrix.spec }}",
-                      "tests": [
-                        {
-                          "title": "Executado com sucesso",
-                          "fullTitle": "Testes de ${{ matrix.spec }} > Executado com sucesso",
-                          "duration": 1000,
-                          "state": "passed"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }' > "cypress/reports/html/.jsons/test-${{ matrix.containers }}.json"
-          fi
-      
-      - name: Verificar arquivos gerados
-        if: always()
-        run: |
-          echo "Estrutura de diretórios cypress/reports:"
-          find cypress/reports -type d | sort || echo "Diretório não encontrado"
-          
-          echo "Arquivos em cypress/reports:"
-          find cypress/reports -type f | sort || echo "Nenhum arquivo encontrado"
-          
-          echo "Arquivos JSON em cypress/reports/.jsons:"
-          find cypress/reports/html/.jsons -type f -name "*.json" | sort || echo "Nenhum arquivo JSON encontrado"
       
       - name: Salvar relatórios como artefatos
         if: always()
@@ -101,31 +46,18 @@ jobs:
           name: cypress-results-${{ matrix.containers }}
           path: |
             cypress/reports/**/*
-          retention-days: 5
+          retention-days: 10
           if-no-files-found: warn
-  
-  generate-report:
+
+  publish-pages:
     needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do código
         uses: actions/checkout@v3
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      
-      - name: Instalar dependências
-        run: npm ci
-      
-      - name: Instalar ferramentas de relatório globalmente
-        run: npm i -g mochawesome-merge mochawesome-report-generator
-      
-      - name: Preparar diretórios para relatórios
-        run: |
-          mkdir -p cypress/reports/html/.jsons
-          mkdir -p cypress/reports/final
+      - name: Criar diretório para publicação
+        run: mkdir -p pages-content
       
       - name: Baixar todos os artefatos
         uses: actions/download-artifact@v4
@@ -133,40 +65,79 @@ jobs:
           pattern: cypress-results-*
           path: artefatos-baixados
       
-      - name: Copiar arquivos JSON
+      - name: Preparar conteúdo para GitHub Pages
         run: |
-          echo "Arquivos encontrados nos artefatos:"
-          find artefatos-baixados -type f | sort
+          # Copiar conteúdo dos artefatos para a pasta de publicação
+          cp -r artefatos-baixados/* pages-content/
           
-          echo "Copiando arquivos JSON para o diretório correto:"
-          find artefatos-baixados -name "*.json" -exec cp {} cypress/reports/html/.jsons/ \; || echo "Nenhum arquivo JSON encontrado para copiar"
+          # Criar um index.html simples que lista os relatórios
+          echo '<!DOCTYPE html>
+          <html>
+          <head>
+            <title>Relatórios de Testes Cypress</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              h1 { color: #333; }
+              .container { display: flex; flex-wrap: wrap; }
+              .report-card { 
+                border: 1px solid #ddd; 
+                border-radius: 8px; 
+                padding: 15px; 
+                margin: 10px; 
+                width: 200px;
+                background-color: #f9f9f9;
+              }
+              .report-card h2 { margin-top: 0; font-size: 18px; }
+              .report-card a { 
+                display: inline-block; 
+                margin-top: 10px; 
+                color: #fff;
+                background-color: #0366d6;
+                text-decoration: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+              }
+              .report-card a:hover { background-color: #0056b3; }
+            </style>
+          </head>
+          <body>
+            <h1>Relatórios de Testes Cypress</h1>
+            <div class="container">
+              <div class="report-card">
+                <h2>GET Tests</h2>
+                <p>Consultas de produtos</p>
+                <a href="cypress-results-1/cypress/reports/html/index.html">Ver Relatório</a>
+              </div>
+              <div class="report-card">
+                <h2>POST Tests</h2>
+                <p>Criação de produtos</p>
+                <a href="cypress-results-2/cypress/reports/html/index.html">Ver Relatório</a>
+              </div>
+              <div class="report-card">
+                <h2>UPDATE Tests</h2>
+                <p>Atualização de produtos</p>
+                <a href="cypress-results-3/cypress/reports/html/index.html">Ver Relatório</a>
+              </div>
+              <div class="report-card">
+                <h2>DELETE Tests</h2>
+                <p>Remoção de produtos</p>
+                <a href="cypress-results-4/cypress/reports/html/index.html">Ver Relatório</a>
+              </div>
+              <div class="report-card">
+                <h2>Negative Tests</h2>
+                <p>Testes negativos</p>
+                <a href="cypress-results-5/cypress/reports/html/index.html">Ver Relatório</a>
+              </div>
+            </div>
+          </body>
+          </html>' > pages-content/index.html
           
-          echo "Arquivos JSON no diretório de mesclagem:"
-          find cypress/reports/html/.jsons -name "*.json" | sort || echo "Nenhum arquivo JSON copiado"
-      
-      - name: Gerar relatório consolidado
-        run: |
-          if [ -d "cypress/reports/html/.jsons" ] && [ "$(ls -A cypress/reports/html/.jsons)" ]; then
-            echo "Mesclando relatórios JSON encontrados..."
-            mochawesome-merge cypress/reports/html/.jsons/*.json > cypress/reports/merged-report.json
-            marge cypress/reports/merged-report.json -f index -o cypress/reports/final
-            echo "Relatório consolidado gerado com sucesso."
-          else
-            echo "Nenhum arquivo JSON encontrado para mesclar. Criando relatório vazio."
-            mkdir -p cypress/reports/final
-            echo "<html><body><h1>Relatório de Testes Cypress</h1><p>Testes executados com sucesso, mas nenhum arquivo de relatório detalhado foi gerado.</p></body></html>" > cypress/reports/final/index.html
-          fi
-      
-      - name: Publicar relatório final
-        uses: actions/upload-artifact@v4
-        with:
-          name: cypress-final-report
-          path: cypress/reports/final
-          retention-days: 10
+          # Verificar conteúdo gerado
+          find pages-content -type f | sort
       
       - name: Publicar no GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: cypress/reports/final
+          publish_dir: pages-content
           publish_branch: gh-pages
