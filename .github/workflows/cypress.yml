@@ -163,3 +163,10 @@ jobs:
           name: cypress-final-report
           path: cypress/reports/final
           retention-days: 10
+      
+      - name: Publicar no GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: cypress/reports/final
+          publish_branch: gh-pages
