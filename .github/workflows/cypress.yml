@@ -1,5 +1,5 @@
 name: suzano-cypress-tests-API
-# Executa os testes do Cypress e gera um relatório unificado publicado no GitHub Pages
+# Executa os testes do Cypress e gera relatório consolidado
 on:
   push:
     branches: [main]
@@ -27,53 +27,73 @@ jobs:
     steps:
       - name: Checkout do código
         uses: actions/checkout@v3
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
+
       - name: Instalar dependências
         run: npm ci
+
       - name: Preparar diretórios para relatórios
         run: |
           mkdir -p cypress/reports/html/.jsons
           mkdir -p cypress/reports/final
-      - name: Executar testes do Cypress
+
+      - name: Executar testes do Cypress com relatório
         uses: cypress-io/github-action@v5
         with:
           spec: ${{ matrix.spec }}
           browser: electron
           headed: false
-      - name: Upload JSON para unificação
+
+      - name: Salvar relatórios como artefatos
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mochawesome-json
-          path: cypress/reports/html/.jsons/*.json
-          retention-days: 1
-  publish-report:
+          name: cypress-results-${{ matrix.containers }}
+          path: |
+            cypress/reports/html/**
+            cypress/screenshots/**
+          retention-days: 5
+
+  # Job adicional para gerar relatório consolidado
+  generate-report:
     needs: test
     runs-on: ubuntu-latest
+    if: always()
     steps:
       - name: Checkout do código
         uses: actions/checkout@v3
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
+
       - name: Instalar dependências
         run: npm ci
-      - name: Baixar todos os relatórios JSON
-        uses: actions/download-artifact@v4
+
+      - name: Baixar todos os relatórios
+        uses: actions/download-artifact@v3
         with:
-          name: mochawesome-json
-          path: cypress/reports/html/.jsons
-      - name: Gerar relatório unificado HTML
+          path: cypress-results
+
+      - name: Preparar diretório de relatórios
         run: |
-          npm run merge-reports
-          npm run generate-html-report
-      - name: Publicar no GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+          mkdir -p cypress/reports/html/.jsons
+          find cypress-results -name "*.json" -exec cp {} cypress/reports/html/.jsons/ \;
+
+      - name: Gerar relatório consolidado
+        run: |
+          npm i -g mochawesome-merge mochawesome-report-generator
+          mochawesome-merge cypress/reports/html/.jsons/*.json > cypress/reports/merged-report.json
+          marge cypress/reports/merged-report.json -f index -o cypress/reports/final
+
+      - name: Publicar relatório final
+        uses: actions/upload-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: cypress/reports/final
-          publish_branch: gh-pages
+          name: final-report
+          path: cypress/reports/final
+          retention-days: 10
