@@ -1,5 +1,5 @@
 name: suzano-cypress-tests-API
-# Executa os testes do Cypress e gera relatório consolidado
+# Executa os testes do Cypress em paralelo e gera um relatório consolidado
 on:
   push:
     branches: [main]
@@ -26,71 +26,73 @@ jobs:
             spec: cypress/e2e/api/products/negative.spec.js
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@v3
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
-
+      
       - name: Instalar dependências
         run: npm ci
-
-      - name: Preparar diretórios para relatórios
+      
+      - name: Preparar diretório para relatórios
         run: |
           mkdir -p cypress/reports/html/.jsons
-          mkdir -p cypress/reports/final
-
+      
       - name: Executar testes do Cypress com relatório
         uses: cypress-io/github-action@v5
         with:
           spec: ${{ matrix.spec }}
           browser: electron
           headed: false
-
-      - name: Salvar relatórios como artefatos
+      
+      - name: Verificar arquivos de relatório gerados
+        run: |
+          echo "Arquivos de relatório encontrados:"
+          find cypress -name "*.json" | grep -v "package.json" | grep -v "cypress.config.js" | grep -v "tsconfig.json"
+      
+      - name: Upload relatórios JSON
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cypress-results-${{ matrix.containers }}
-          path: |
-            cypress/reports/html/**
-            cypress/screenshots/**
-          retention-days: 5
-
-  # Job adicional para gerar relatório consolidado
+          name: report-json-${{ matrix.containers }}
+          path: cypress/reports/html/.jsons/*.json
+          retention-days: 1
+  
   generate-report:
     needs: test
     runs-on: ubuntu-latest
-    if: always()
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@v3
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
-
+      
       - name: Instalar dependências
         run: npm ci
-
+      
       - name: Baixar todos os relatórios
         uses: actions/download-artifact@v4
         with:
           path: cypress-results
-
+      
       - name: Preparar diretório de relatórios
         run: |
           mkdir -p cypress/reports/html/.jsons
           find cypress-results -name "*.json" -exec cp {} cypress/reports/html/.jsons/ \;
-
+          echo "Arquivos JSON encontrados:"
+          find cypress/reports/html/.jsons -name "*.json" | sort
+      
       - name: Gerar relatório consolidado
         run: |
           npm i -g mochawesome-merge mochawesome-report-generator
           mochawesome-merge cypress/reports/html/.jsons/*.json > cypress/reports/merged-report.json
           marge cypress/reports/merged-report.json -f index -o cypress/reports/final
-
+      
       - name: Publicar relatório final
         uses: actions/upload-artifact@v4
         with:
