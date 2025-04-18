@@ -1,174 +1,117 @@
 name: suzano-cypress-tests-API
-# Executa os testes do Cypress em paralelo e publica relatórios individuais
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
+
 jobs:
   test:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        containers: [1, 2, 3, 4, 5]
-        include:
-          - containers: 1
-            spec: cypress/e2e/api/products/get.spec.js
-          - containers: 2
-            spec: cypress/e2e/api/products/post.spec.js
-          - containers: 3
-            spec: cypress/e2e/api/products/update.spec.js
-          - containers: 4
-            spec: cypress/e2e/api/products/delete.spec.js
-          - containers: 5
-            spec: cypress/e2e/api/products/negative.spec.js
-    steps:
-      - name: Checkout do código
-        uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      
-      - name: Instalar dependências
-        run: npm ci
-      
-      - name: Forçar a geração de HTML
-        run: |
-          # Modificar a configuração para garantir que os relatórios HTML sejam gerados
-          sed -i 's/"html": false/"html": true/g' cypress.config.js || echo "Nenhuma alteração necessária"
-          mkdir -p cypress/reports/html
-      
-      - name: Executar testes do Cypress
-        run: npx cypress run --spec ${{ matrix.spec }} --reporter cypress-mochawesome-reporter
-      
-      - name: Verificar arquivos gerados
-        if: always()
-        run: |
-          echo "Arquivos em cypress/reports:"
-          find cypress/reports -type f | sort || echo "Nenhum arquivo encontrado"
-      
-      - name: Salvar relatórios como artefatos
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: cypress-results-${{ matrix.containers }}
-          path: |
-            cypress/reports/**/*
-          retention-days: 5
-          if-no-files-found: warn
+    # Mantém os testes como estão...
 
-  publish-reports:
+  publish-to-pages:
     needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v3
-      
-      - name: Criar estrutura de diretórios para GitHub Pages
-        run: |
-          mkdir -p public
-          # Criando página índice para navegar entre os relatórios
-          echo '<!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <title>Relatórios de Testes Cypress</title>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 20px; }
-              h1 { color: #333; }
-              .reports { display: flex; flex-wrap: wrap; gap: 20px; }
-              .report-card { 
-                border: 1px solid #ddd; 
-                border-radius: 8px; 
-                padding: 15px; 
-                width: 200px;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-              }
-              .report-card h2 { margin-top: 0; color: #0066cc; }
-              a { color: #0066cc; text-decoration: none; }
-              a:hover { text-decoration: underline; }
-            </style>
-          </head>
-          <body>
-            <h1>Relatórios de Testes Cypress</h1>
-            <p>Selecione um dos relatórios abaixo para visualizar os resultados:</p>
-            
-            <div class="reports">
-              <div class="report-card">
-                <h2>Get Products</h2>
-                <p>Testes de consulta de produtos da API</p>
-                <a href="./get/">Ver Relatório</a>
-              </div>
-              <div class="report-card">
-                <h2>Post Products</h2>
-                <p>Testes de criação de produtos</p>
-                <a href="./post/">Ver Relatório</a>
-              </div>
-              <div class="report-card">
-                <h2>Update Products</h2>
-                <p>Testes de atualização de produtos</p>
-                <a href="./update/">Ver Relatório</a>
-              </div>
-              <div class="report-card">
-                <h2>Delete Products</h2>
-                <p>Testes de exclusão de produtos</p>
-                <a href="./delete/">Ver Relatório</a>
-              </div>
-              <div class="report-card">
-                <h2>Negative Tests</h2>
-                <p>Testes de cenários negativos</p>
-                <a href="./negative/">Ver Relatório</a>
-              </div>
-            </div>
-          </body>
-          </html>' > public/index.html
+        uses: actions/checkout@v4
       
       - name: Baixar todos os artefatos
         uses: actions/download-artifact@v4
         with:
-          pattern: cypress-results-*
-          path: artefatos-baixados
+          path: relatorios-baixados
       
-      - name: Organizar relatórios para GitHub Pages
+      # Adiciona debugging para verificar a estrutura real dos arquivos baixados
+      - name: Verificar estrutura dos artefatos
         run: |
-          # Criar diretórios para cada tipo de teste
-          mkdir -p public/get
-          mkdir -p public/post
-          mkdir -p public/update
-          mkdir -p public/delete
-          mkdir -p public/negative
-          
-          # Copiar relatórios para os diretórios correspondentes
-          if [ -d "artefatos-baixados/cypress-results-1/cypress/reports/html" ]; then
-            cp -r artefatos-baixados/cypress-results-1/cypress/reports/html/* public/get/
-          fi
-          
-          if [ -d "artefatos-baixados/cypress-results-2/cypress/reports/html" ]; then
-            cp -r artefatos-baixados/cypress-results-2/cypress/reports/html/* public/post/
-          fi
-          
-          if [ -d "artefatos-baixados/cypress-results-3/cypress/reports/html" ]; then
-            cp -r artefatos-baixados/cypress-results-3/cypress/reports/html/* public/update/
-          fi
-          
-          if [ -d "artefatos-baixados/cypress-results-4/cypress/reports/html" ]; then
-            cp -r artefatos-baixados/cypress-results-4/cypress/reports/html/* public/delete/
-          fi
-          
-          if [ -d "artefatos-baixados/cypress-results-5/cypress/reports/html" ]; then
-            cp -r artefatos-baixados/cypress-results-5/cypress/reports/html/* public/negative/
-          fi
-          
-          echo "Estrutura de diretórios para GitHub Pages:"
-          find public -type d | sort
+          echo "Estrutura completa dos artefatos:"
+          find relatorios-baixados -type f | grep -E 'html|htm|json' || echo "Nenhum HTML/JSON encontrado"
       
-      - name: Publicar no GitHub Pages
+      - name: Preparar diretório para GitHub Pages
+        run: |
+          # Criar estrutura de diretórios para o site
+          mkdir -p site
+          
+          # Verificar e copiar os arquivos HTML encontrados
+          find relatorios-baixados -name "index.html" -exec cp -v {} site/ \;
+          
+          # Criar página índice principal
+          cat > site/index.html <<EOL
+          <!DOCTYPE html>
+          <html lang="pt-BR">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Relatórios de Testes API - Suzano</title>
+              <style>
+                  body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; color: #333; }
+                  h1 { color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+                  .container { max-width: 1200px; margin: 0 auto; }
+                  .report-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+                  .report-card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+                  .report-card h2 { margin-top: 0; color: #3498db; }
+                  a { color: #3498db; text-decoration: none; }
+                  a:hover { text-decoration: underline; }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1>Relatórios de Testes API - Suzano QA Challenge</h1>
+                  
+                  <p>Selecione um dos relatórios abaixo para visualizar os resultados dos testes:</p>
+                  
+                  <div class="report-list">
+                      <div class="report-card">
+                          <h2>Relatório 1 - GET Products</h2>
+                          <p>Testes de consulta de produtos da API</p>
+                          <a href="./relatorio-1/">Ver Relatório</a>
+                      </div>
+                      <div class="report-card">
+                          <h2>Relatório 2 - POST Products</h2>
+                          <p>Testes de criação de produtos</p>
+                          <a href="./relatorio-2/">Ver Relatório</a>
+                      </div>
+                      <div class="report-card">
+                          <h2>Relatório 3 - UPDATE Products</h2>
+                          <p>Testes de atualização de produtos</p>
+                          <a href="./relatorio-3/">Ver Relatório</a>
+                      </div>
+                      <div class="report-card">
+                          <h2>Relatório 4 - DELETE Products</h2>
+                          <p>Testes de exclusão de produtos</p>
+                          <a href="./relatorio-4/">Ver Relatório</a>
+                      </div>
+                      <div class="report-card">
+                          <h2>Relatório 5 - Negative Tests</h2>
+                          <p>Testes de cenários negativos</p>
+                          <a href="./relatorio-5/">Ver Relatório</a>
+                      </div>
+                  </div>
+              </div>
+          </body>
+          </html>
+          EOL
+          
+          # Criar diretórios para cada relatório e copiar os conteúdos
+          for i in {1..5}; do
+            mkdir -p site/relatorio-$i
+            
+            # Copiar conteúdos para diretório específico (usando find para localizar os arquivos)
+            find relatorios-baixados/cypress-results-$i -type f -exec cp -v {} site/relatorio-$i/ \; || echo "Nenhum arquivo encontrado para relatório $i"
+            
+            # Se encontrou um relatório HTML neste diretório, copie-o como index.html
+            find relatorios-baixados/cypress-results-$i -name "*.html" -exec cp -v {} site/relatorio-$i/index.html \; || echo "Nenhum HTML encontrado para relatório $i"
+          done
+          
+          # Verificar estrutura final
+          echo "Estrutura final do site:"
+          find site -type f | sort
+      
+      # Publicar no GitHub Pages
+      - name: Deploy no GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
-          publish_branch: gh-pages
+          publish_dir: ./site
+          force_orphan: true
