@@ -1,0 +1,89 @@
+name: suzano-cypress-tests-API
+# Executa testes Cypress em containers paralelos e publica um único relatório HTML
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        containers: [1, 2, 3, 4, 5]
+        include:
+          - containers: 1
+            spec: cypress/e2e/api/products/get.spec.js
+          - containers: 2
+            spec: cypress/e2e/api/products/post.spec.js
+          - containers: 3
+            spec: cypress/e2e/api/products/update.spec.js
+          - containers: 4
+            spec: cypress/e2e/api/products/delete.spec.js
+          - containers: 5
+            spec: cypress/e2e/api/products/negative.spec.js
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Executar testes do Cypress
+        uses: cypress-io/github-action@v5
+        with:
+          spec: ${{ matrix.spec }}
+          browser: electron
+          headed: false
+
+      - name: Enviar relatórios JSON para unificação
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mochawesome-json
+          path: cypress/reports/html/.jsons/
+          retention-days: 1
+
+  publish-report:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Baixar todos os relatórios JSON
+        uses: actions/download-artifact@v4
+        with:
+          name: mochawesome-json
+          path: cypress/reports/html/.jsons/
+
+      - name: Gerar relatório unificado HTML
+        run: |
+          npm install -g mochawesome-merge mochawesome-report-generator
+          npx mochawesome-merge cypress/reports/html/.jsons/*.json > cypress/reports/html/merged.json
+          npx marge cypress/reports/html/merged.json --reportDir cypress/reports/html --reportFilename index
+
+      - name: Publicar no GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./cypress/reports/html
