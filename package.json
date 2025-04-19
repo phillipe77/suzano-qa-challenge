@@ -22,7 +22,7 @@
     "report": "npm run merge-reports && npm run generate-html-report"
   },
   "keywords": [],
-  "author": "",
+  "author": "Phillipe Linhares",
   "license": "ISC",
   "devDependencies": {
     "ajv": "^8.17.1",
