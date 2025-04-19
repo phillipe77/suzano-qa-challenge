@@ -180,7 +180,7 @@ Os relatórios são gerados automaticamente após a execução dos testes e publ
 ### Acesso aos Relatórios
 
 Os relatórios podem ser acessados em:  
-`https://phillipe77.github.io/suzano-qa-challenge/`
+https://phillipe77.github.io/suzano-qa-challenge/
 
 ---
 
@@ -239,4 +239,3 @@ Este projeto está licenciado sob a licença ISC. Consulte o arquivo package.jso
 
 ---
 
-**Desenvolvido para o Suzano QA Challenge - 2025.**
