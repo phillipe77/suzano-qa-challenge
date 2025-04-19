@@ -1,0 +1,10 @@
+{
+  "suites": 1,
+  "tests": 1,
+  "passes": 1,
+  "pending": 0,
+  "failures": 0,
+  "start": "2025-04-18T22:41:30.007Z",
+  "duration": 821,
+  "file": "cypress\\e2e\\api\\products\\delete.spec.js"
+}

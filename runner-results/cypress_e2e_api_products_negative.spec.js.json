@@ -1,0 +1,10 @@
+{
+  "suites": 1,
+  "tests": 3,
+  "passes": 3,
+  "pending": 0,
+  "failures": 0,
+  "start": "2025-04-18T22:41:24.171Z",
+  "duration": 1237,
+  "file": "cypress\\e2e\\api\\products\\negative.spec.js"
+}

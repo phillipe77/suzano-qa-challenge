@@ -9,7 +9,7 @@ module.exports = defineConfig({
     inlineAssets: true,
     charts: true,
     saveAllAttempts: false,
-    html: true, // Alterado para true para gerar HTML diretamente
+    html: true,
     json: true,
     jsonFolder: '.jsons'
   },

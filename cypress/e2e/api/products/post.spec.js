@@ -6,7 +6,6 @@ import { TIMEOUTS } from '../../../constants/api.js';
 describe('Criação de Produtos - POST', () => {
     let testProductId;
 
-    // Limpar após cada teste para não deixar dados residuais
     afterEach(() => {
         if (testProductId) {
             productsService.deleteProduct(testProductId).then(() => {
@@ -16,13 +15,11 @@ describe('Criação de Produtos - POST', () => {
     });
 
     it('Deve criar um novo produto', () => {
-        // Gerar produto com identificador único para evitar colisões em execuções paralelas
         const timestamp = new Date().getTime();
         const newProduct = productFactory.createDefault();
         newProduct.title = `${newProduct.title}_${timestamp}`;
 
         cy.createTestProduct(newProduct.toPayload()).then((response) => {
-            // Armazenar ID apenas para limpeza neste mesmo teste
             testProductId = response.body.id;
 
             apiAssertions

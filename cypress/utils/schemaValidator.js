@@ -1,27 +1,17 @@
 import Ajv from 'ajv';
-import addFormats from 'ajv-formats'; // <-- adicionado
+import addFormats from 'ajv-formats';
 
-/**
- * Utilitário para validação de esquemas JSON
- */
 class SchemaValidator {
     constructor() {
         this.ajv = new Ajv({ allErrors: true });
-        addFormats(this.ajv); // <-- adicionado para suportar "uri", "email", etc.
+        addFormats(this.ajv);
     }
 
-    /**
-     * Valida se os dados estão conforme o esquema definido
-     * @param {Object} data - Objeto a ser validado
-     * @param {Object} schema - Esquema de validação
-     * @returns {boolean} - Resultado da validação
-     */
     validate(data, schema) {
         const validate = this.ajv.compile(schema);
         const valid = validate(data);
 
         if (!valid) {
-            // Registra erros detalhados no log do Cypress
             Cypress.log({
                 name: 'SCHEMA VALIDATION',
                 message: 'Failed',

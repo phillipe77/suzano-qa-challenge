@@ -1,6 +1,4 @@
-/**
- * Esquema para validação de respostas do endpoint de produtos
- */
+
 export default {
     type: 'object',
     required: ['id', 'title', 'price', 'category', 'description', 'image'],

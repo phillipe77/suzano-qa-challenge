@@ -1,14 +1,6 @@
 import Product from '../models/product.js';
 
-/**
- * Factory para criação padronizada de produtos de teste
- */
 class ProductFactory {
-    /**
-     * Cria produto padrão para testes
-     * @param {Object} overrides - Sobreescreve propriedades do produto
-     * @returns {Product} - Instância de produto
-     */
     createDefault(overrides = {}) {
         return new Product({
             title: 'Produto de Teste',
@@ -20,12 +12,6 @@ class ProductFactory {
         });
     }
 
-    /**
-     * Cria produto para categoria específica
-     * @param {String} category - Categoria do produto
-     * @param {Object} overrides - Propriedades adicionais
-     * @returns {Product} - Instância de produto
-     */
     createForCategory(category, overrides = {}) {
         const baseProducts = {
             'electronics': {
@@ -67,10 +53,6 @@ class ProductFactory {
         });
     }
 
-    /**
-     * Cria produto com dados específicos para atualização
-     * @returns {Product} - Produto para atualização
-     */
     createForUpdate() {
         return this.createDefault({
             title: "Produto Atualizado",
@@ -79,10 +61,6 @@ class ProductFactory {
         });
     }
 
-    /**
-     * Cria dados para atualização parcial
-     * @returns {Object} - Dados para PATCH
-     */
     createPartialUpdateData() {
         return {
             price: 149.99,

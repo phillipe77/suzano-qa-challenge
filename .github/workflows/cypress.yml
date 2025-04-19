@@ -27,24 +27,24 @@ jobs:
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
-      
+
       - name: Instalar dependências
         run: npm ci
-      
+
       - name: Executar testes do Cypress
         run: npx cypress run --spec ${{ matrix.spec }} --reporter cypress-mochawesome-reporter
-      
+
       - name: Verificar arquivos gerados
         if: always()
         run: |
           echo "Arquivos em cypress/reports:"
           find cypress/reports -type f | sort || echo "Diretório não encontrado"
-      
+
       - name: Salvar relatórios como artefatos
         if: always()
         uses: actions/upload-artifact@v4
@@ -61,22 +61,22 @@ jobs:
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
-      
+
       - name: Baixar todos os artefatos
         uses: actions/download-artifact@v4
         with:
           path: relatorios-baixados
-      
+
       - name: Verificar estrutura dos artefatos
         run: |
           echo "Estrutura completa dos artefatos:"
           find relatorios-baixados -type f | grep -E 'html|htm|json' || echo "Nenhum HTML/JSON encontrado"
-      
+
       - name: Preparar diretório para GitHub Pages
         run: |
           # Criar estrutura de diretórios para o site
           mkdir -p site
-          
+
           # Criar página índice principal
           cat > site/index.html <<EOL
           <!DOCTYPE html>
@@ -133,7 +133,7 @@ jobs:
           </body>
           </html>
           EOL
-          
+
           # Criar diretórios para cada relatório e copiar os conteúdos
           for i in {1..5}; do
             mkdir -p site/relatorio-$i
@@ -152,11 +152,11 @@ jobs:
               echo "<html><body><h1>Relatório $i</h1><p>Nenhum relatório HTML foi encontrado para este teste.</p></body></html>" > site/relatorio-$i/index.html
             fi
           done
-          
+
           # Verificar estrutura final
           echo "Estrutura final do site:"
           find site -type f | sort
-      
+
       - name: Deploy no GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:

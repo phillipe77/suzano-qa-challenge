@@ -1,6 +1,3 @@
-/**
- * Modelo que representa um produto e seus comportamentos
- */
 export default class Product {
     constructor(data = {}) {
         this.id = data.id;
@@ -10,7 +7,6 @@ export default class Product {
         this.category = data.category || '';
         this.image = data.image || '';
 
-        // Adiciona rating se disponível
         if (data.rating) {
             this.rating = {
                 rate: data.rating.rate || 0,
@@ -19,17 +15,10 @@ export default class Product {
         }
     }
 
-    /**
-     * Valida se o produto possui as propriedades essenciais
-     */
     isValid() {
         return Boolean(this.title && this.price && this.category);
     }
 
-    /**
-     * Cria payload para atualização parcial
-     * @param {Array} fields - Campos a serem incluídos no payload
-     */
     toPartialUpdatePayload(fields = ['title', 'price']) {
         return fields.reduce((obj, field) => {
             if (this[field] !== undefined) obj[field] = this[field];
@@ -37,9 +26,6 @@ export default class Product {
         }, {});
     }
 
-    /**
-     * Retorna o payload completo para criar/atualizar
-     */
     toPayload() {
         const payload = {
             title: this.title,
@@ -49,7 +35,6 @@ export default class Product {
             image: this.image
         };
 
-        // Não incluir id em novos produtos
         if (this.id) {
             payload.id = this.id;
         }
@@ -57,12 +42,7 @@ export default class Product {
         return payload;
     }
 
-    /**
-     * Verifica se dois produtos são iguais (para assertions)
-     * @param {Product|Object} otherProduct - Produto para comparação
-     */
     equals(otherProduct) {
-        // Se for um objeto simples, converter para Product
         const other = otherProduct instanceof Product
             ? otherProduct
             : new Product(otherProduct);

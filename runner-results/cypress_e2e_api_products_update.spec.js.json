@@ -1,0 +1,10 @@
+{
+  "suites": 3,
+  "tests": 2,
+  "passes": 2,
+  "pending": 0,
+  "failures": 0,
+  "start": "2025-04-18T22:41:22.224Z",
+  "duration": 2215,
+  "file": "cypress\\e2e\\api\\products\\update.spec.js"
+}
