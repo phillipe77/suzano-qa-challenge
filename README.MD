@@ -1,4 +1,4 @@
-# Suzano QA Challenge - Framework de Automação de Testes API
+# Suzano QA challenge - Framework de automação de testes de API
 
 ## 📖 Visão Geral
 
